@@ -15,8 +15,52 @@ namespace CarRentingSystemBlazor
 #else
         public const string CONNECTION_STRING = "Host=postgres; Database=CarRentingApp; Username=postgres; Password=root;";
 #endif
+        public static async Task AssignAdminRole(IServiceProvider serviceProvider, string email)
+        {
+            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await userManager.FindByEmailAsync(email);
 
-        public static void Main(string[] args)
+            if (user == null)
+            {
+                Console.WriteLine($"User with email {email} not found.");
+                return;
+            }
+
+            if (await userManager.IsInRoleAsync(user, "Admin"))
+            {
+                Console.WriteLine($"User {email} is already in the Admin role.");
+                return;
+            }
+
+            var result = await userManager.AddToRoleAsync(user, "Admin");
+            if (result.Succeeded)
+            {
+                await userManager.UpdateSecurityStampAsync(user);
+                Console.WriteLine($"User {email} has been assigned the Admin role.");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to assign Admin role to {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            }
+        }
+
+        public static async Task SeedRoles(IServiceProvider serviceProvider)
+        {
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            // Add required roles
+            var roles = new[] { "User", "Moderator", "Admin" };
+
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
+        }
+
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddRadzenComponents();
@@ -32,29 +76,22 @@ namespace CarRentingSystemBlazor
 
             builder.Services.AddScoped<DialogService>();
 
-            builder.Services.AddAuthentication(options =>
-                {
-                    options.DefaultScheme = IdentityConstants.ApplicationScheme;
-                    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-                })
-                .AddIdentityCookies();
-
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("RequireAdminRole", policy =>
                     policy.RequireRole("Admin"));
             });
 
-
-
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseNpgsql(CONNECTION_STRING));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddSignInManager()
-                .AddDefaultTokenProviders();
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
@@ -69,6 +106,11 @@ namespace CarRentingSystemBlazor
 
                 try
                 {
+                    // Seed roles
+                    await SeedRoles(services);
+                    await AssignAdminRole(services, "weizedinc@gmail.com");
+
+                    // Apply database migrations
                     var context = services.GetRequiredService<ApplicationDbContext>();
                     logger.LogInformation("Applying database migrations...");
                     context.Database.Migrate();
@@ -76,7 +118,7 @@ namespace CarRentingSystemBlazor
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "An error occurred while migrating the database.");
+                    logger.LogError(ex, "An error occurred while migrating the database or seeding roles.");
                 }
             }
 

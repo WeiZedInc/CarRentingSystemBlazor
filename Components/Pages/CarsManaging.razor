@@ -1,13 +1,93 @@
 ﻿@page "/carsManaging"
-
+@using CarRentingSystemBlazor.Data
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@inject DialogService DialogService
+@inject ApplicationDbContext DbContext
 
 @attribute [Authorize(Policy = "RequireAdminRole")]
 
-<PageTitle>Auth</PageTitle>
+<PageTitle>Manage Cars</PageTitle>
 
-<h1>You are authenticated</h1>
+<h1>Manage Cars</h1>
 
 <AuthorizeView>
-    Hello @context.User.Identity?.Name!
+    <p>Hello @context.User.Identity?.Name!</p>
 </AuthorizeView>
+
+@if (cars == null || cars.Count == 0)
+{
+    <p>No cars available.</p>
+}
+else
+{
+    <RadzenDataGrid TItem="Car" Data="@cars" AutoGenerateColumns="false">
+        <Columns>
+            <RadzenDataGridColumn TItem="Car" Property="Mark" Title="Mark" />
+            <RadzenDataGridColumn TItem="Car" Property="Model" Title="Model" />
+            <RadzenDataGridColumn TItem="Car" Property="Available" Title="Available">
+                <Template Context="car">
+                    @(car.Available ? "Yes" : "No")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Car" Property="ImageURL" Title="Image URL" />
+            <RadzenDataGridColumn TItem="Car" Property="PriceForOneDayRent" Title="Price (per day)" />
+            <RadzenDataGridColumn TItem="Car" Title="Actions">
+                <Template Context="car">
+                    <RadzenButton Icon="edit" Text="Edit" Click="@(() => EditCar(car))" />
+                    <RadzenButton Icon="delete" Text="Delete" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteCar(car))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+}
+
+<RadzenButton Icon="add_circle_outline" Text="Add New Car" Click="AddCar" />
+
+@code {
+    private List<Car> cars;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cars = await DbContext.Cars.ToListAsync();
+    }
+
+    private async Task AddCar()
+    {
+        var newCar = new Car();
+        var result = await DialogService.OpenAsync<EditCarDialog>("Add New Car",
+            new Dictionary<string, object> { { "Car", newCar } });
+
+        if (result == true)
+        {
+            DbContext.Cars.Add(newCar);
+            await DbContext.SaveChangesAsync();
+            cars = await DbContext.Cars.ToListAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task EditCar(Car car)
+    {
+        var result = await DialogService.OpenAsync<EditCarDialog>("Edit Car",
+            new Dictionary<string, object> { { "Car", car } });
+
+        if (result == true)
+        {
+            await DbContext.SaveChangesAsync();
+            cars = await DbContext.Cars.ToListAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteCar(Car car)
+    {
+        if ((bool)await DialogService.Confirm("Are you sure you want to delete this car?", "Delete Car"))
+        {
+            DbContext.Cars.Remove(car);
+            await DbContext.SaveChangesAsync();
+            cars = await DbContext.Cars.ToListAsync();
+            StateHasChanged();
+        }
+    }
+}

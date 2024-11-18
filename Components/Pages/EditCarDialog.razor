@@ -1,0 +1,35 @@
+﻿@using CarRentingSystemBlazor.Data
+@inject DialogService DialogService
+
+<RadzenTemplateForm Data="@Car" TItem="Car" Submit="Save">
+    <div class="p-2">
+        <RadzenLabel Text="Mark" />
+        <RadzenTextBox @bind-Value="Car.Mark" Style="width: 100%;" />
+    </div>
+    <div class="p-2">
+        <RadzenLabel Text="Model" />
+        <RadzenTextBox @bind-Value="Car.Model" Style="width: 100%;" />
+    </div>
+    <div class="p-2">
+        <RadzenLabel Text="Available" />
+        <RadzenCheckBox @bind-Value="Car.Available" />
+    </div>
+    <div class="p-2">
+        <RadzenLabel Text="Image URL" />
+        <RadzenTextBox @bind-Value="Car.ImageURL" Style="width: 100%;" />
+    </div>
+    <div class="p-2">
+        <RadzenLabel Text="Price For One Day Rent" />
+        <RadzenNumeric @bind-Value="Car.PriceForOneDayRent" Min="0" Style="width: 100%;" />
+    </div>
+    <RadzenButton Text="Save" ButtonType="ButtonType.Submit" Style="margin-top: 10px;" />
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public Car Car { get; set; }
+
+    private async Task Save()
+    {
+        DialogService.Close(true);
+    }
+}

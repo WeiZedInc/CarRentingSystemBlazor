@@ -6,10 +6,10 @@ namespace CarRentingSystemBlazor.Data
     {
         [Key]
         public int ID { get; set; }
-        private string Mark { get; set; }
-        private string Model { get; set; }
-        private bool Available { get; set; }
-        private string ImageURL { get; set; }
-        private decimal PriceForOneDayRent { get; set; }
+        public string Mark { get; set; }
+        public string Model { get; set; }
+        public bool Available { get; set; }
+        public string ImageURL { get; set; }
+        public decimal PriceForOneDayRent { get; set; }
     }
 }
