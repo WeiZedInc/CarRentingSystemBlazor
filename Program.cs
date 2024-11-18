@@ -63,7 +63,6 @@ namespace CarRentingSystemBlazor
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddRadzenComponents();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
@@ -95,6 +94,7 @@ namespace CarRentingSystemBlazor
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+            builder.Services.AddRadzenComponents();
 
             var app = builder.Build();
 

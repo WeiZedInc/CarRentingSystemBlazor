@@ -1,7 +1,76 @@
 ﻿@page "/"
+@using CarRentingSystemBlazor.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext DbContext
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
 
 <PageTitle>Cars</PageTitle>
 
-<h1>Hello, world!</h1>
+@if (cars == null)
+{
+    <p>Loading...</p>
+}
+else if (cars.Count == 0)
+{
+    <p>No cars available at the moment.</p>
+}
+else
+{
+    <div class="car-container">
+        @foreach (var car in cars)
+        {
+            <RadzenCard Style="margin: 10px; width: 300px; display: inline-block;">
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <img src="@car.ImageURL" alt="@($"{car.Mark} {car.Model}")" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px;" />
+                </div>
+                <div style="padding: 10px;">
+                    <h3 style="margin: 5px 0;">@car.Mark @car.Model</h3>
+                    <p style="margin: 5px 0;">Available: @(car.Available ? "Yes" : "No")</p>
+                    <p style="margin: 5px 0; font-weight: bold;">Price per day: @car.PriceForOneDayRent.ToString("C")</p>
+                </div>
+            </RadzenCard>
+        }
+    </div>
+}
 
-Welcome to your new app.
+@code
+{
+    private List<Car> cars;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cars = await DbContext.Cars.ToListAsync();
+    }
+}
+
+<style>
+    /* Container for all cars */
+    .car-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    /* Radzen card customization (if required for better styling) */
+    .rz-card {
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        background-color: #fff;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .rz-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Styling for car images inside the cards */
+        .rz-card img {
+            border-radius: 10px 10px 0 0;
+        }
+
+</style>
