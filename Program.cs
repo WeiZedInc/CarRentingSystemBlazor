@@ -39,6 +39,12 @@ namespace CarRentingSystemBlazor
                 })
                 .AddIdentityCookies();
 
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("RequireAdminRole", policy =>
+                    policy.RequireRole("Admin"));
+            });
+
 
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
