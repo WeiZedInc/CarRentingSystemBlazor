@@ -8,12 +8,13 @@ namespace CarRentingSystemBlazor.Data
         Pending,
         Rejected,
         Accepted,
-        Completed
+        Completed,
+        CanceledByClient
     }
     public class Order
     {
         [Key] public int ID { get; set; }
-        public int ClientId { get; set; }
+        public string ClientId { get; set; }
 
         [ForeignKey("Car")]
         public int CarID { get; set; }
