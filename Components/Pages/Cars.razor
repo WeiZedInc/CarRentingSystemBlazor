@@ -1,11 +1,15 @@
 ﻿@page "/"
+@using CarRentingSystemBlazor.Components.Shared
 @using CarRentingSystemBlazor.Data
 @using Microsoft.EntityFrameworkCore
-@using System.Globalization
 @inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject DialogService DialogService
 @rendermode @(new InteractiveServerRenderMode(prerender:false))
 
 <PageTitle>Cars</PageTitle>
+
 <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
     <RadzenLabel Text="Car garage" Style="font-size: 30px; color: black;" />
 
@@ -30,24 +34,18 @@
                         <h3 style="margin: 5px 0;">@car.Mark @car.Model</h3>
                         <p style="margin: 5px 0;">Available: @(car.Available ? "Yes" : "No")</p>
                         <p style="margin: 5px 0; font-weight: bold;">
-                            Price per day: @car.PriceForOneDayRent.ToString("C", CultureInfo.GetCultureInfo("en-US"))
+                            Price per day: @car.PriceForOneDayRent.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
                         </p>
+                        @if (car.Available)
+                        {
+                            <RadzenButton Text="Make Order" Style="margin-top: 10px;" Click="@(() => OpenOrderDialog(car))" />
+                        }
                     </div>
                 </RadzenCard>
             }
         </div>
     }
 </RadzenStack>
-
-@code
-{
-    private List<Car> cars;
-
-    protected override async Task OnInitializedAsync()
-    {
-        cars = await DbContext.Cars.ToListAsync();
-    }
-}
 
 <style>
     .car-container {
@@ -76,3 +74,39 @@
         }
 
 </style>
+@code {
+    private List<Car> cars;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cars = await DbContext.Cars.ToListAsync();
+    }
+
+    private async Task OpenOrderDialog(Car car)
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true || HttpContextAccessor.HttpContext == default)
+        {
+            NavigationManager.NavigateTo("Account/Login");
+            return;
+        }
+
+        var result = await DialogService.OpenAsync<OrderDialog>(
+            "Create Order",
+            new Dictionary<string, object> { { "SelectedCar", car } },
+            new DialogOptions { Width = "400px", Height = "400px" }
+        );
+
+        if (result != null && (bool)result)
+        {
+            // Optionally refresh data or display a success message
+            await LoadCars();
+        }
+    }
+
+    private async Task LoadCars()
+    {
+        cars = await DbContext.Cars.ToListAsync();
+        StateHasChanged();
+    }
+}

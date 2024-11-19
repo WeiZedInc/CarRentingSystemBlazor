@@ -1,0 +1,68 @@
+﻿@using CarRentingSystemBlazor.Data
+@inject DialogService DialogService
+@inject ApplicationDbContext DbContext
+@inject IHttpContextAccessor HttpContextAccessor
+
+<RadzenTemplateForm Data="@Order" TItem="Order" Submit="Save">
+    <RadzenStack Gap="10px">
+        <RadzenLabel Text="Rental Start Date" />
+        <RadzenDatePicker @bind-Value="Order.RentalStart"
+                          Min="@DateTime.Today"
+                          Change="CalculateTotalCost"
+                          ShowTime="false"
+                          DateFormat="yyyy-MM-dd" />
+        <RadzenLabel Text="Rental End Date" />
+        <RadzenDatePicker @bind-Value="Order.RentalEnd"
+                          Min="@Order.RentalStart"
+                          Change="CalculateTotalCost"
+                          ShowTime="false"
+                          DateFormat="yyyy-MM-dd" />
+        <RadzenLabel Text="Total Rental Cost" />
+        <RadzenLabel Text="@FormattedTotalRentalCost" />
+        <RadzenButton ButtonType="ButtonType.Submit" Text="Confirm Order" Style="margin-top: 10px;" />
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public Car SelectedCar { get; set; }
+
+    private Order Order { get; set; } = new();
+
+    private string FormattedTotalRentalCost => Order.TotalRentalCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+
+    protected override void OnInitialized()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        Order = new Order
+            {
+                CarID = SelectedCar.ID,
+                ClientId = int.Parse(user?.Claims.FirstOrDefault(c => c.Type == "sub")?.Value ?? "0"),
+                RentalStart = DateTime.Today,
+                RentalEnd = DateTime.Today.AddDays(1), // Default end date
+                Status = OrderStatus.Pending
+            };
+        CalculateTotalCost(); // Initial calculation
+    }
+
+    private void CalculateTotalCost()
+    {
+        if (Order.RentalStart != DateTime.MinValue && Order.RentalEnd != DateTime.MinValue)
+        {
+            // Ensure that we only consider the date part
+            var startDate = Order.RentalStart.Date;
+            var endDate = Order.RentalEnd.Date;
+
+            var days = (endDate - startDate).Days;
+            days = days <= 0 ? 1 : days; // At least one day
+            Order.TotalRentalCost = days * SelectedCar.PriceForOneDayRent;
+            StateHasChanged(); // Update the UI
+        }
+    }
+
+    private async void Save()
+    {
+        DbContext.Orders.Add(Order);
+        await DbContext.SaveChangesAsync();
+        DialogService.Close(true); // Close the dialog and return success
+    }
+}
