@@ -1,5 +1,6 @@
 ﻿@using CarRentingSystemBlazor.Data
 @using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
 @inject DialogService DialogService
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
@@ -10,17 +11,21 @@
         <RadzenLabel Text="Rental Start Date" />
         <RadzenDatePicker @bind-Value="Order.RentalStart"
                           Min="@DateTime.Today"
-                          Change="CalculateTotalCost"
+                          Change="OnRentalStartChanged"
+                          DateRender="OnDateRenderStart"
                           ShowTime="false"
                           DateFormat="yyyy-MM-dd" />
+
         <RadzenLabel Text="Rental End Date" />
         <RadzenDatePicker @bind-Value="Order.RentalEnd"
                           Min="@Order.RentalStart"
                           Change="CalculateTotalCost"
+                          DateRender="OnDateRenderEnd"
                           ShowTime="false"
                           DateFormat="yyyy-MM-dd" />
+
         <RadzenLabel Text="Total Rental Cost" />
-        <RadzenLabel Text="@FormattedTotalRentalCost" />
+        <RadzenLabel Text="@FormattedTotalRentalCost" Style="font-weight:bold;" />
         <RadzenButton ButtonType="ButtonType.Submit" Text="Confirm Order" Style="margin-top: 10px;" />
     </RadzenStack>
 </RadzenTemplateForm>
@@ -32,13 +37,14 @@
 
     private string FormattedTotalRentalCost => Order.TotalRentalCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
 
-    protected override void OnInitialized()
+    private List<DateTime> DisabledDates { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
     {
         var user = HttpContextAccessor.HttpContext?.User;
 
-        if (user == null)
+        if (user == null || !user.Identity.IsAuthenticated)
         {
-            Console.WriteLine("User is null");
             NavigationManager.NavigateTo("Account/Login");
             return;
         }
@@ -47,8 +53,18 @@
 
         if (string.IsNullOrEmpty(userId))
         {
-            Console.WriteLine("User ID not found in claims");
             NavigationManager.NavigateTo("Account/Login");
+            return;
+        }
+
+        await LoadDisabledDates();
+
+        var firstAvailableDate = GetFirstAvailableDate();
+
+        if (firstAvailableDate == null)
+        {
+            await DialogService.Alert("No available dates for this car.", "Unavailable");
+            DialogService.Close();
             return;
         }
 
@@ -56,23 +72,103 @@
             {
                 CarID = SelectedCar.ID,
                 ClientId = userId,
-                RentalStart = DateTime.Today,
-                RentalEnd = DateTime.Today.AddDays(1), // Default end date
+                RentalStart = firstAvailableDate.Value,
+                RentalEnd = firstAvailableDate.Value.AddDays(1), // Default end date
                 Status = OrderStatus.Pending
             };
+
         CalculateTotalCost(); // Initial calculation
+    }
+
+    private DateTime? GetFirstAvailableDate()
+    {
+        var date = DateTime.Today;
+        var maxDate = DateTime.Today.AddYears(1);
+
+        while (date <= maxDate)
+        {
+            if (!DisabledDates.Contains(date))
+            {
+                return date;
+            }
+            date = date.AddDays(1);
+        }
+
+        // No available dates within the next year
+        return null;
+    }
+
+
+    private async Task LoadDisabledDates()
+    {
+        // Fetch existing orders for the selected car with correct statuses
+        var existingOrders = await DbContext.Orders
+            .Where(o => o.CarID == SelectedCar.ID && (o.Status == OrderStatus.Accepted || o.Status == OrderStatus.NeedToPayForDamage))
+            .ToListAsync();
+
+        DisabledDates = new List<DateTime>();
+
+        foreach (var order in existingOrders)
+        {
+            var startDate = order.RentalStart.Date;
+            var endDate = order.RentalEnd.Date;
+
+            for (var date = startDate; date <= endDate; date = date.AddDays(1))
+            {
+                DisabledDates.Add(DateTime.SpecifyKind(date, DateTimeKind.Unspecified));
+            }
+        }
+
+        DisabledDates = DisabledDates.Distinct().ToList();
+        StateHasChanged();
+    }
+
+    private void OnDateRenderStart(DateRenderEventArgs args)
+    {
+        if (IsDateDisabled(args.Date))
+        {
+            args.Disabled = true;
+            args.Attributes["style"] = "color: red;";
+        }
+    }
+
+    private void OnDateRenderEnd(DateRenderEventArgs args)
+    {
+        if (IsDateDisabled(args.Date) || args.Date < Order.RentalStart.Date)
+        {
+            args.Disabled = true;
+            args.Attributes["style"] = "color: red;";
+        }
+    }
+
+    private bool IsDateDisabled(DateTime date)
+    {
+        return DisabledDates.Contains(date.Date);
+    }
+
+    private void OnRentalStartChanged(DateTime? date)
+    {
+        if (date.HasValue)
+        {
+            Order.RentalStart = date.Value.Date;
+
+            // Ensure RentalEnd is not before RentalStart
+            if (Order.RentalEnd < Order.RentalStart)
+                Order.RentalEnd = Order.RentalStart;
+
+            CalculateTotalCost();
+            StateHasChanged();
+        }
     }
 
     private void CalculateTotalCost()
     {
         if (Order.RentalStart != DateTime.MinValue && Order.RentalEnd != DateTime.MinValue)
         {
-            // Ensure that we only consider the date part
             var startDate = Order.RentalStart.Date;
             var endDate = Order.RentalEnd.Date;
 
-            var days = (endDate - startDate).Days;
-            days = days <= 0 ? 1 : days; // At least one day
+            var days = (endDate - startDate).Days + 1; // Include the end date
             Order.TotalRentalCost = days * SelectedCar.PriceForOneDayRent;
             StateHasChanged(); // Update the UI
         }
@@ -80,6 +176,18 @@
 
     private async void Save()
     {
+        // Validate that the selected dates do not overlap with existing bookings
+        var overlappingOrder = await DbContext.Orders
+            .Where(o => o.CarID == Order.CarID && (o.Status == OrderStatus.Accepted || o.Status == OrderStatus.NeedToPayForDamage))
+            .Where(o => o.RentalStart.Date <= Order.RentalEnd.Date && o.RentalEnd.Date >= Order.RentalStart.Date)
+            .FirstOrDefaultAsync();
+
+        if (overlappingOrder != null)
+        {
+            await DialogService.Alert("The selected dates overlap with an existing booking. Please choose different dates.", "Booking Conflict");
+            return;
+        }
+
         DbContext.Orders.Add(Order);
         await DbContext.SaveChangesAsync();
         DialogService.Close(true); // Close the dialog and return success

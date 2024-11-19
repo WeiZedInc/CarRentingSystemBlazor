@@ -66,11 +66,7 @@
 
     private async void Save()
     {
-        if (OrderToEdit.Status == OrderStatus.Accepted)
-            OrderToEdit.Car.Available = false;
-        else if (OrderToEdit.Status == OrderStatus.Completed)
-            OrderToEdit.Car.Available = true;
-        else if (OrderToEdit.Status == OrderStatus.NeedToPayForDamage && string.IsNullOrWhiteSpace(OrderToEdit.DamageDescription))
+        if (OrderToEdit.Status == OrderStatus.NeedToPayForDamage && string.IsNullOrWhiteSpace(OrderToEdit.DamageDescription))
             OrderToEdit.DamageDescription = "empty";
 
         DbContext.Cars.Update(OrderToEdit.Car);

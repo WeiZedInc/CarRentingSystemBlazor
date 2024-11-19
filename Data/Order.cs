@@ -31,9 +31,9 @@ namespace CarRentingSystemBlazor.Data
 
         public Car Car { get; set; } // Navigation property
 
-        public string DamageDescription { get; set; }
-        public decimal DamageCost { get; set; }
+        public string? DamageDescription { get; set; }
+        public decimal? DamageCost { get; set; }
 
-        public string RejectionReason { get; set; }
+        public string? RejectionReason { get; set; }
     }
 }
