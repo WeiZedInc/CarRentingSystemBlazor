@@ -1,0 +1,65 @@
+﻿@using CarRentingSystemBlazor.Data
+@inject DialogService DialogService
+@inject ApplicationDbContext DbContext
+
+<RadzenTemplateForm Data="@OrderToEdit" TItem="Order" Submit="Save">
+    <RadzenStack Gap="10px">
+        <RadzenLabel Text="Rental Start Date" />
+        <RadzenDatePicker @bind-Value="OrderToEdit.RentalStart"
+                          Min="@DateTime.Today"
+                          Change="CalculateTotalCost"
+                          ShowTime="false"
+                          DateFormat="yyyy-MM-dd" />
+        <RadzenLabel Text="Rental End Date" />
+        <RadzenDatePicker @bind-Value="OrderToEdit.RentalEnd"
+                          Min="@OrderToEdit.RentalStart"
+                          Change="CalculateTotalCost"
+                          ShowTime="false"
+                          DateFormat="yyyy-MM-dd" />
+        <RadzenLabel Text="Total Rental Cost" />
+        <RadzenLabel Text="@FormattedTotalRentalCost" Style="font-weight:bold;" />
+        <RadzenLabel Text="Status" />
+        <RadzenDropDown @bind-Value="OrderToEdit.Status"
+                        Data="@(Enum.GetValues(typeof(OrderStatus)).Cast<OrderStatus>())"
+                        Style="width:100%" />
+        <RadzenButton ButtonType="ButtonType.Submit" Text="Save Changes" Style="margin-top: 10px;" />
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public Order OrderToEdit { get; set; }
+
+    private string FormattedTotalRentalCost => OrderToEdit.TotalRentalCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+
+    protected override void OnInitialized()
+    {
+        CalculateTotalCost(); // Initial calculation
+    }
+
+    private void CalculateTotalCost()
+    {
+        if (OrderToEdit.RentalStart != DateTime.MinValue && OrderToEdit.RentalEnd != DateTime.MinValue)
+        {
+            var startDate = OrderToEdit.RentalStart.Date;
+            var endDate = OrderToEdit.RentalEnd.Date;
+
+            var days = (endDate - startDate).Days;
+            days = days <= 0 ? 1 : days; // At least one day
+            OrderToEdit.TotalRentalCost = days * OrderToEdit.Car.PriceForOneDayRent;
+            StateHasChanged(); // Update the UI
+        }
+    }
+
+    private async void Save()
+    {
+        if (OrderToEdit.Status == OrderStatus.Accepted)
+            OrderToEdit.Car.Available = false;
+        else if (OrderToEdit.Status == OrderStatus.Completed)
+            OrderToEdit.Car.Available = true;
+
+        DbContext.Cars.Update(OrderToEdit.Car);
+        DbContext.Orders.Update(OrderToEdit);
+        await DbContext.SaveChangesAsync();
+        DialogService.Close(true); // Close the dialog and return success
+    }
+}

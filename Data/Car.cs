@@ -11,5 +11,7 @@ namespace CarRentingSystemBlazor.Data
         public bool Available { get; set; }
         public string ImageURL { get; set; }
         public decimal PriceForOneDayRent { get; set; }
+
+        public ICollection<Order> Orders { get; set; } // Navigation property
     }
 }

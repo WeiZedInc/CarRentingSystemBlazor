@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace CarRentingSystemBlazor.Data
 {
@@ -8,5 +7,15 @@ namespace CarRentingSystemBlazor.Data
     {
         public DbSet<Car> Cars { get; set; }
         public DbSet<Order> Orders { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Car)
+                .WithMany(c => c.Orders)
+                .HasForeignKey(o => o.CarID);
+        }
     }
 }

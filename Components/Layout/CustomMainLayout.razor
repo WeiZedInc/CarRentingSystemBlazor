@@ -26,9 +26,10 @@
                     <RadzenPanelMenuItem Path="Account/Login" Text="Login" Icon="login" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
                 </NotAuthorized>
             </AuthorizeView>
-            <AuthorizeView Policy="RequireAdminRole">
+            <AuthorizeView Policy="RequireAdminOrModeratorRole">
                 <Authorized>
                     <RadzenPanelMenuItem Path="carsManaging" Text="Cars Managing" Icon="directions_car" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
+                    <RadzenPanelMenuItem Path="orders" Text="Orders Managing" Icon="directions_car" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
                 </Authorized>
             </AuthorizeView>
         </RadzenPanelMenu>
