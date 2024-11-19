@@ -1,0 +1,115 @@
+﻿@page "/myorders"
+@using CarRentingSystemBlazor.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@inject ApplicationDbContext DbContext
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+<PageTitle>My Orders</PageTitle>
+
+@if (orders == null)
+{
+    <p>Loading...</p>
+}
+else if (orders.Count == 0)
+{
+    <p>You have no orders at the moment.</p>
+}
+else
+{
+    <div class="order-container">
+        @foreach (var order in orders)
+        {
+            <RadzenCard Style="margin: 10px; width: 300px; display: inline-block;">
+                <div style="padding: 10px;">
+                    <h3 style="margin: 5px 0;">Order ID: @order.ID</h3>
+                    <p style="margin: 5px 0;">Car: @order.Car.Mark @order.Car.Model</p>
+                    <p style="margin: 5px 0;">Rental Start: @order.RentalStart.ToShortDateString()</p>
+                    <p style="margin: 5px 0;">Rental End: @order.RentalEnd.ToShortDateString()</p>
+                    <p style="margin: 5px 0;">Total Cost: @order.TotalRentalCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</p>
+                    <p style="margin: 5px 0;">Status: @order.Status.ToString()</p>
+                    @if (order.Status == OrderStatus.Pending)
+                    {
+                        <RadzenButton Text="Cancel Order" Style="margin-top: 10px;" Click="@(() => CancelOrder(order))" ButtonStyle="ButtonStyle.Danger" />
+                    }
+                </div>
+            </RadzenCard>
+        }
+    </div>
+}
+
+<style>
+    .order-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .rz-card {
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .rz-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+</style>
+
+@code {
+    private List<Order> orders;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserOrders();
+    }
+
+    private async Task LoadUserOrders()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+
+        if (user?.Identity?.IsAuthenticated != true || HttpContextAccessor.HttpContext == default)
+        {
+            NavigationManager.NavigateTo("Account/Login");
+            return;
+        }
+
+        // Get the user's ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            orders = new List<Order>();
+            Console.WriteLine("No claims");
+            return;
+        }
+
+        string userId = userIdClaim;
+
+        // Load orders for the logged-in user
+        orders = await DbContext.Orders
+            .Include(o => o.Car)
+            .Where(o => o.ClientId == userId)
+            .ToListAsync();
+    }
+
+    private async Task CancelOrder(Order order)
+    {
+        var confirm = await DialogService.Confirm("Are you sure you want to cancel this order?", "Cancel Order", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (confirm == true)
+        {
+            order.Status = OrderStatus.CanceledByClient;
+            DbContext.Orders.Update(order);
+            await DbContext.SaveChangesAsync();
+            await LoadUserOrders();
+        }
+    }
+}

@@ -8,9 +8,9 @@
         </RadzenLink>
         <RadzenPanelMenu Style="background: transparent; color: rgb(193, 216, 216); font-size: 20px;">
             <RadzenPanelMenuItem Path="" Text="Cars" Icon="toll" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
+            <RadzenPanelMenuItem Path="myorders" Text="My Orders" Icon="directions_car" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
             <AuthorizeView>
                 <Authorized>
-                    <RadzenPanelMenuItem Path="auth" Text="Auth Info" Icon="lock" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
                     <RadzenPanelMenuItem Path="Account/Manage" Text="@context.User.Identity?.Name" Icon="person" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
                     <form action="Account/Logout" method="post" style="margin: 0; padding: 0;">
                         <AntiforgeryToken />
@@ -26,9 +26,10 @@
                     <RadzenPanelMenuItem Path="Account/Login" Text="Login" Icon="login" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
                 </NotAuthorized>
             </AuthorizeView>
-            <AuthorizeView Policy="RequireAdminRole">
+            <AuthorizeView Policy="RequireAdminOrModeratorRole">
                 <Authorized>
                     <RadzenPanelMenuItem Path="carsManaging" Text="Cars Managing" Icon="directions_car" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
+                    <RadzenPanelMenuItem Path="orders" Text="Orders Managing" Icon="directions_car" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
                 </Authorized>
             </AuthorizeView>
         </RadzenPanelMenu>
