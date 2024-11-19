@@ -79,6 +79,8 @@ namespace CarRentingSystemBlazor
             {
                 options.AddPolicy("RequireAdminRole", policy =>
                     policy.RequireRole("Admin"));
+                options.AddPolicy("RequireAdminOrModeratorRole", policy =>
+                    policy.RequireRole("Admin", "Moderator"));
             });
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>

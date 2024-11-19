@@ -1,7 +1,9 @@
 ﻿@using CarRentingSystemBlazor.Data
+@using System.Security.Claims
 @inject DialogService DialogService
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
 
 <RadzenTemplateForm Data="@Order" TItem="Order" Submit="Save">
     <RadzenStack Gap="10px">
@@ -33,10 +35,27 @@
     protected override void OnInitialized()
     {
         var user = HttpContextAccessor.HttpContext?.User;
+
+        if (user == null)
+        {
+            Console.WriteLine("User is null");
+            NavigationManager.NavigateTo("Account/Login");
+            return;
+        }
+
+        var userId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            Console.WriteLine("User ID not found in claims");
+            NavigationManager.NavigateTo("Account/Login");
+            return;
+        }
+
         Order = new Order
             {
                 CarID = SelectedCar.ID,
-                ClientId = int.Parse(user?.Claims.FirstOrDefault(c => c.Type == "sub")?.Value ?? "0"),
+                ClientId = userId,
                 RentalStart = DateTime.Today,
                 RentalEnd = DateTime.Today.AddDays(1), // Default end date
                 Status = OrderStatus.Pending
