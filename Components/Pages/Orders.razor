@@ -39,6 +39,12 @@ else
                         <p style="margin: 5px 0;">Description: @order.DamageDescription</p>
                         <p style="margin: 5px 0;">Damage Cost: @order.DamageCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</p>
                     }
+                    @if (order.Status == OrderStatus.Rejected)
+                    {
+                        <div style="border-top: 1px solid #ccc; margin: 10px 0;"></div>
+                        <p style="margin: 5px 0; font-weight:bold;">Rejection Notice</p>
+                        <p style="margin: 5px 0;">Reason: @order.RejectionReason</p>
+                    }
 
                     <RadzenButton Text="Edit" Style="margin-top: 10px;" Click="@(() => OpenEditOrderDialog(order))" />
                     <RadzenButton Text="Delete" Style="margin-top: 10px; margin-left: 10px;" Click="@(() => DeleteOrder(order))" ButtonStyle="ButtonStyle.Danger" />

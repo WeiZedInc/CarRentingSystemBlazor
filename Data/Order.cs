@@ -33,5 +33,7 @@ namespace CarRentingSystemBlazor.Data
 
         public string DamageDescription { get; set; }
         public decimal DamageCost { get; set; }
+
+        public string RejectionReason { get; set; }
     }
 }
