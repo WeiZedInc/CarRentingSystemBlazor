@@ -5,6 +5,7 @@
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
 
 <RadzenTemplateForm Data="@Order" TItem="Order" Submit="Save">
     <RadzenStack Gap="10px">
@@ -191,5 +192,12 @@
         DbContext.Orders.Add(Order);
         await DbContext.SaveChangesAsync();
         DialogService.Close(true); // Close the dialog and return success
+        NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = $"Order created for ({Order.Car.Mark} {Order.Car.Model})",
+                Detail = $"Now You can check for Yours order status at My Orders page.",
+                Duration = 4000
+            });
     }
 }

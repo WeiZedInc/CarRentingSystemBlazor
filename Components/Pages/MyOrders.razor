@@ -6,6 +6,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject DialogService DialogService
 @inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
 
 <PageTitle>My Orders</PageTitle>
 
@@ -123,6 +124,13 @@ else
         {
             order.Status = OrderStatus.CanceledByClient;
             DbContext.Orders.Update(order);
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = $"Order Canceled!",
+                    Detail = $"For car {order.GetFullCarName()}",
+                    Duration = 4000
+                });
             await DbContext.SaveChangesAsync();
             await LoadUserOrders();
         }

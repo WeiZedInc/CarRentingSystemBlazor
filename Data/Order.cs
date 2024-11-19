@@ -35,5 +35,7 @@ namespace CarRentingSystemBlazor.Data
         public decimal? DamageCost { get; set; }
 
         public string? RejectionReason { get; set; }
+
+        public string GetFullCarName() => $"{Car.Mark} {Car.Model}";
     }
 }

@@ -1,6 +1,7 @@
 ﻿@using CarRentingSystemBlazor.Data
 @inject DialogService DialogService
 @inject ApplicationDbContext DbContext
+@inject NotificationService NotificationService
 
 <RadzenTemplateForm Data="@OrderToEdit" TItem="Order" Submit="Save">
     <RadzenStack Gap="10px">
@@ -73,5 +74,12 @@
         DbContext.Orders.Update(OrderToEdit);
         await DbContext.SaveChangesAsync();
         DialogService.Close(true);
+        NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = $"Order Updated!  (clientId:{OrderToEdit.ClientId})",
+                Detail = $"Car:{OrderToEdit.Car.Mark} {OrderToEdit.Car.Model}\nOrderId:{OrderToEdit.ID}",
+                Duration = 4000
+            });
     }
 }
