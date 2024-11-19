@@ -32,6 +32,11 @@
                     <RadzenPanelMenuItem Path="orders" Text="Orders Managing" Icon="directions_car" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
                 </Authorized>
             </AuthorizeView>
+            <AuthorizeView Policy="RequireAdminRole">
+                <Authorized>
+                    <RadzenPanelMenuItem Path="admin" Text="Users" Icon="directions_car" IconColor="rgb(186, 91, 255)" Style=" border-bottom: none;" />
+                </Authorized>
+            </AuthorizeView>
         </RadzenPanelMenu>
     </RadzenSidebar>
     <RadzenBody Style="background: linear-gradient(to top, rgb(0, 19, 33), black); overflow-x: hidden;">
