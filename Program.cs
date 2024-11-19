@@ -108,15 +108,15 @@ namespace CarRentingSystemBlazor
 
                 try
                 {
-                    // Seed roles
-                    await SeedRoles(services);
-                    await AssignAdminRole(services, "weizedinc@gmail.com");
-
                     // Apply database migrations
                     var context = services.GetRequiredService<ApplicationDbContext>();
                     logger.LogInformation("Applying database migrations...");
                     context.Database.Migrate();
                     logger.LogInformation("Database migrations applied successfully.");
+
+                    // Seed roles
+                    await SeedRoles(services);
+                    await AssignAdminRole(services, "weizedinc@gmail.com");
                 }
                 catch (Exception ex)
                 {
