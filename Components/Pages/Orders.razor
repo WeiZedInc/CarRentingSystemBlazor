@@ -1,10 +1,12 @@
 ﻿@page "/orders"
 @using CarRentingSystemBlazor.Components.Shared
 @using CarRentingSystemBlazor.Data
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
 @inject DialogService DialogService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = "RequireAdminOrModeratorRole")]
 @rendermode @(new InteractiveServerRenderMode(prerender:false))
 
 <PageTitle>Orders</PageTitle>
@@ -30,6 +32,14 @@ else
                     <p style="margin: 5px 0;">Rental End: @order.RentalEnd.ToShortDateString()</p>
                     <p style="margin: 5px 0;">Total Cost: @order.TotalRentalCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</p>
                     <p style="margin: 5px 0;">Status: @order.Status.ToString()</p>
+                    @if (!string.IsNullOrWhiteSpace(order.DamageDescription) || order.DamageCost > 0)
+                    {
+                        <div style="border-top: 1px solid #ccc; margin: 10px 0;"></div>
+                        <p style="margin: 5px 0; font-weight:bold;">Damage Report</p>
+                        <p style="margin: 5px 0;">Description: @order.DamageDescription</p>
+                        <p style="margin: 5px 0;">Damage Cost: @order.DamageCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</p>
+                    }
+
                     <RadzenButton Text="Edit" Style="margin-top: 10px;" Click="@(() => OpenEditOrderDialog(order))" />
                     <RadzenButton Text="Delete" Style="margin-top: 10px; margin-left: 10px;" Click="@(() => DeleteOrder(order))" ButtonStyle="ButtonStyle.Danger" />
                 </div>

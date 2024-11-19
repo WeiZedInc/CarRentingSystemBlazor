@@ -20,8 +20,17 @@
         <RadzenLabel Text="@FormattedTotalRentalCost" Style="font-weight:bold;" />
         <RadzenLabel Text="Status" />
         <RadzenDropDown @bind-Value="OrderToEdit.Status"
-                        Data="@(Enum.GetValues(typeof(OrderStatus)).Cast<OrderStatus>())"
+                        Data="@Enum.GetValues(typeof(OrderStatus))"
                         Style="width:100%" />
+
+        @if (OrderToEdit.Status == OrderStatus.NeedToPayForDamage)
+        {
+            <RadzenLabel Text="Damage Description" />
+            <RadzenTextArea @bind-Value="OrderToEdit.DamageDescription" Style="width:100%;" />
+            <RadzenLabel Text="Damage Cost" />
+            <RadzenNumeric @bind-Value="OrderToEdit.DamageCost" Style="width:100%;" />
+        }
+
         <RadzenButton ButtonType="ButtonType.Submit" Text="Save Changes" Style="margin-top: 10px;" />
     </RadzenStack>
 </RadzenTemplateForm>
@@ -56,10 +65,12 @@
             OrderToEdit.Car.Available = false;
         else if (OrderToEdit.Status == OrderStatus.Completed)
             OrderToEdit.Car.Available = true;
+        else if (OrderToEdit.Status == OrderStatus.NeedToPayForDamage && string.IsNullOrWhiteSpace(OrderToEdit.DamageDescription))
+            OrderToEdit.DamageDescription = "empty";
 
         DbContext.Cars.Update(OrderToEdit.Car);
         DbContext.Orders.Update(OrderToEdit);
         await DbContext.SaveChangesAsync();
-        DialogService.Close(true); // Close the dialog and return success
+        DialogService.Close(true);
     }
 }

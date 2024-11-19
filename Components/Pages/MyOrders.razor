@@ -4,9 +4,8 @@
 @using System.Security.Claims
 @inject ApplicationDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
-@inject NavigationManager NavigationManager
 @inject DialogService DialogService
-@rendermode @(new InteractiveServerRenderMode(prerender:false))
+@inject NavigationManager NavigationManager
 
 <PageTitle>My Orders</PageTitle>
 
@@ -31,6 +30,15 @@ else
                     <p style="margin: 5px 0;">Rental End: @order.RentalEnd.ToShortDateString()</p>
                     <p style="margin: 5px 0;">Total Cost: @order.TotalRentalCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</p>
                     <p style="margin: 5px 0;">Status: @order.Status.ToString()</p>
+
+                    @if (!string.IsNullOrWhiteSpace(order.DamageDescription) || order.DamageCost > 0)
+                    {
+                        <div style="border-top: 1px solid #ccc; margin: 10px 0;"></div>
+                        <p style="margin: 5px 0; font-weight:bold;">Damage Report</p>
+                        <p style="margin: 5px 0;">Description: @order.DamageDescription</p>
+                        <p style="margin: 5px 0;">Damage Cost: @order.DamageCost.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</p>
+                    }
+
                     @if (order.Status == OrderStatus.Pending)
                     {
                         <RadzenButton Text="Cancel Order" Style="margin-top: 10px;" Click="@(() => CancelOrder(order))" ButtonStyle="ButtonStyle.Danger" />
@@ -40,6 +48,7 @@ else
         }
     </div>
 }
+
 
 <style>
     .order-container {

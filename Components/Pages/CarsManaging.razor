@@ -6,7 +6,7 @@
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject ApplicationDbContext DbContext
-@attribute [Authorize(Policy = "RequireAdminRole")]
+@attribute [Authorize(Policy = "RequireAdminOrModeratorRole")]
 @rendermode @(new InteractiveServerRenderMode(prerender:false))
 
 <PageTitle>Manage Cars</PageTitle>

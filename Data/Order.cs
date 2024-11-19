@@ -6,10 +6,11 @@ namespace CarRentingSystemBlazor.Data
     public enum OrderStatus
     {
         Pending,
+        CanceledByClient,
         Rejected,
         Accepted,
-        Completed,
-        CanceledByClient
+        NeedToPayForDamage,
+        Completed
     }
     public class Order
     {
@@ -29,5 +30,8 @@ namespace CarRentingSystemBlazor.Data
         public decimal TotalRentalCost { get; set; }
 
         public Car Car { get; set; } // Navigation property
+
+        public string DamageDescription { get; set; }
+        public decimal DamageCost { get; set; }
     }
 }
