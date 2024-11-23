@@ -46,7 +46,8 @@ jobs:
       
       - name: Run K6 performance tests
         run: |
-          docker run --network="host" -v ${{ github.workspace }}/load-tests:/scripts loadimpact/k6 run /scripts/constant_vus_test.js
+          docker-compose up -d # Ensure all services are running
+          docker run --network="carrentingsystemblazor_default" -v ${{ github.workspace }}/load-tests:/scripts grafana/k6 run /scripts/constant_vus_test.js
 
       - name: Tear down Docker Compose
         if: always()

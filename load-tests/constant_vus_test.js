@@ -9,7 +9,7 @@ export const options = {
 };
 
 export default function () {
-    const url = 'http://localhost:7063/api/users'; // Update this to match your API URL
+    const url = 'http://app:80/api/users'; // Use Docker service name and container port
     const response = http.get(url);
 
     // Validate response
