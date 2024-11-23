@@ -43,25 +43,6 @@ jobs:
         run: |
           docker-compose -f docker-compose.yml down || true
           docker-compose -f docker-compose.yml up -d
-          
-      - name: Wait for the application to be ready
-        run: |
-          echo "Waiting for the application to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:7063/api/users > /dev/null; then
-              echo "Application is ready!"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Application failed to start."
-          exit 1
-
-      - name: Output Application Logs
-        if: failure()
-        run: |
-          echo "Application logs:"
-          docker logs $(docker ps -q --filter "name=carrentingsystemblazor-app-1")
       
       - name: Run K6 performance tests
         run: |
@@ -70,3 +51,9 @@ jobs:
       - name: Tear down Docker Compose
         if: always()
         run: docker-compose -f docker-compose.yml down
+
+      - name: Output Application Logs
+        if: failure()
+        run: |
+          echo "Application logs:"
+          docker logs $(docker ps -q --filter "name=carrentingsystemblazor-app-1")
