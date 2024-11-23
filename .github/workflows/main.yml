@@ -50,7 +50,7 @@ jobs:
           node-version: '14'
 
       - name: Install k6-html-reporter
-        run: npm install -g k6-html-reporter
+        run: npm install k6-html-reporter
 
       - name: Run K6 Test - Constant VUs
         run: |
@@ -61,7 +61,7 @@ jobs:
 
       - name: Generate K6 HTML Report - Constant VUs
         run: |
-          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_vus.html \
+          npx k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_vus.html \
             --json-file ${{ github.workspace }}/load-tests/results_constant_vus.json
 
       - name: Run K6 Test - Ramping VUs
@@ -73,7 +73,7 @@ jobs:
 
       - name: Generate K6 HTML Report - Ramping VUs
         run: |
-          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_ramping_vus.html \
+          npx k6-html-reporter --name ${{ github.workspace }}/load-tests/report_ramping_vus.html \
             --json-file ${{ github.workspace }}/load-tests/results_ramping_vus.json
 
       - name: Run K6 Test - Constant Arrival Rate
@@ -85,7 +85,7 @@ jobs:
 
       - name: Generate K6 HTML Report - Constant Arrival Rate
         run: |
-          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html \
+          npx k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html \
             --json-file ${{ github.workspace }}/load-tests/results_constant_arrival_rate.json
 
       - name: Upload Test Reports
@@ -97,12 +97,12 @@ jobs:
             ${{ github.workspace }}/load-tests/report_ramping_vus.html
             ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html
 
-      - name: Tear down Docker Compose
-        if: always()
-        run: docker-compose -f docker-compose.yml down
-
       - name: Output Application Logs
         if: failure()
         run: |
           echo "Application logs:"
           docker logs $(docker ps -q --filter "name=carrentingsystemblazor-app-1")
+
+      - name: Tear down Docker Compose
+        if: always()
+        run: docker-compose -f docker-compose.yml down
