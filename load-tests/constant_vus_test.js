@@ -24,9 +24,11 @@ export default function () {
   //sleep(randomIntBetween(1, 5));
 }
 
-import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
+const { htmlReport } = require('https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js');
+
 export function handleSummary(data) {
     return {
-      '/scripts/report_constant_vus.html': textSummary(data, { format: 'html' }),
+      '/scripts/report_constant_vus.html': htmlReport(data),
     };
   }
+  
