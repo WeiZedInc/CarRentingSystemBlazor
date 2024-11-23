@@ -11,9 +11,10 @@ namespace CarRentingSystemBlazor
     //http://199.247.4.184
     public class Program
     {
+        public static int CountRequsts = 0;
+
 #if DEBUG
         public const string CONNECTION_STRING = "Host=localhost; Database=CarRentingApp; Username=postgres; Password=root;";
-        public static int CountRequsts = 0;
 #else
         public const string CONNECTION_STRING = "Host=postgres; Database=CarRentingApp; Username=postgres; Password=root;";
 #endif
