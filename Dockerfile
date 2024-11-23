@@ -1,3 +1,4 @@
+EXPOSE 80
 # Use the latest version of the .NET SDK as the build environment
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 

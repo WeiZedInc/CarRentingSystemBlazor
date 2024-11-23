@@ -57,6 +57,12 @@ jobs:
           echo "Application failed to start."
           exit 1
 
+      - name: Output Application Logs
+        if: failure()
+        run: |
+          echo "Application logs:"
+          docker logs $(docker ps -q --filter "name=carrentingsystemblazor-app-1")
+      
       - name: Run K6 performance tests
         run: |
           docker run --network="host" -v ${{ github.workspace }}/load-tests:/scripts loadimpact/k6 run /scripts/constant_vus_test.js
