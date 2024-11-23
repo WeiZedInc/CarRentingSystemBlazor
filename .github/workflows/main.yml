@@ -39,20 +39,25 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose version
 
-      - name: Set up Docker Compose
-        run: |
-          docker-compose -f docker-compose.yml down || true
-          docker-compose -f docker-compose.yml up -d
-
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '14'
 
       - name: Install k6-html-reporter
-        run: npm install k6-html-reporter
+        run: |
+          npm install -g k6-html-reporter
+          echo "Adding global npm bin directory to PATH"
+          echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
+
+      - name: Set up Docker Compose
+        working-directory: ${{ github.workspace }}
+        run: |
+          docker-compose down || true
+          docker-compose up -d
 
       - name: Run K6 Test - Constant VUs
+        working-directory: ${{ github.workspace }}
         run: |
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
@@ -61,10 +66,11 @@ jobs:
 
       - name: Generate K6 HTML Report - Constant VUs
         run: |
-          npx k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_vus.html \
+          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_vus.html \
             --json-file ${{ github.workspace }}/load-tests/results_constant_vus.json
 
       - name: Run K6 Test - Ramping VUs
+        working-directory: ${{ github.workspace }}
         run: |
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
@@ -73,10 +79,11 @@ jobs:
 
       - name: Generate K6 HTML Report - Ramping VUs
         run: |
-          npx k6-html-reporter --name ${{ github.workspace }}/load-tests/report_ramping_vus.html \
+          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_ramping_vus.html \
             --json-file ${{ github.workspace }}/load-tests/results_ramping_vus.json
 
       - name: Run K6 Test - Constant Arrival Rate
+        working-directory: ${{ github.workspace }}
         run: |
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
@@ -85,7 +92,7 @@ jobs:
 
       - name: Generate K6 HTML Report - Constant Arrival Rate
         run: |
-          npx k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html \
+          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html \
             --json-file ${{ github.workspace }}/load-tests/results_constant_arrival_rate.json
 
       - name: Upload Test Reports
@@ -105,4 +112,5 @@ jobs:
 
       - name: Tear down Docker Compose
         if: always()
-        run: docker-compose -f docker-compose.yml down
+        working-directory: ${{ github.workspace }}
+        run: docker-compose down
