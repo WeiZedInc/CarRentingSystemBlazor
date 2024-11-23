@@ -8,10 +8,12 @@ using Radzen;
 
 namespace CarRentingSystemBlazor
 {
+    //http://199.247.4.184
     public class Program
     {
 #if DEBUG
         public const string CONNECTION_STRING = "Host=localhost; Database=CarRentingApp; Username=postgres; Password=root;";
+        public static int CountRequsts = 0;
 #else
         public const string CONNECTION_STRING = "Host=postgres; Database=CarRentingApp; Username=postgres; Password=root;";
 #endif
@@ -98,6 +100,15 @@ namespace CarRentingSystemBlazor
 
             builder.Services.AddRadzenComponents();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAnyOriginPolicy",
+                    policy => policy.AllowAnyOrigin()
+                                    .AllowAnyHeader()
+                                    .AllowAnyMethod());
+            });
+
+
             var app = builder.Build();
 
             // ¬ыполнение миграций перед запуском приложени€
@@ -146,6 +157,13 @@ namespace CarRentingSystemBlazor
 
             // Add additional endpoints required by the Identity /Account Razor components.
             app.MapAdditionalIdentityEndpoints();
+
+            app.MapGet("api/users", () =>
+            {
+                CountRequsts++;
+                Console.WriteLine(CountRequsts);
+                return Results.Ok(CountRequsts);
+            });
 
             app.Run();
         }
