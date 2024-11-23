@@ -21,5 +21,6 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80 
     ports:
       - "7063:80"
