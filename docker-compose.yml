@@ -1,0 +1,6 @@
+version: "3.8"
+services:
+  app:
+    image: yuriy235/carrentalblazor
+    ports:
+      - "7063:80"
