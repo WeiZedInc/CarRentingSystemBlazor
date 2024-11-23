@@ -57,11 +57,11 @@ jobs:
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/constant_vus_test.js \
-            --out json=/scripts/results_constant_vus.json
+            --out json=/dev/stdout > ${{ github.workspace }}/load-tests/results_constant_vus.json
 
       - name: Generate K6 HTML Report - Constant VUs
         run: |
-          k6-html-reporter --name report_constant_vus.html \
+          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_vus.html \
             --json-file ${{ github.workspace }}/load-tests/results_constant_vus.json
 
       - name: Run K6 Test - Ramping VUs
@@ -69,11 +69,11 @@ jobs:
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/ramping_vus_test.js \
-            --out json=/scripts/results_ramping_vus.json
+            --out json=/dev/stdout > ${{ github.workspace }}/load-tests/results_ramping_vus.json
 
       - name: Generate K6 HTML Report - Ramping VUs
         run: |
-          k6-html-reporter --name report_ramping_vus.html \
+          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_ramping_vus.html \
             --json-file ${{ github.workspace }}/load-tests/results_ramping_vus.json
 
       - name: Run K6 Test - Constant Arrival Rate
@@ -81,11 +81,11 @@ jobs:
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/constant_arrival_rate_test.js \
-            --out json=/scripts/results_constant_arrival_rate.json
+            --out json=/dev/stdout > ${{ github.workspace }}/load-tests/results_constant_arrival_rate.json
 
       - name: Generate K6 HTML Report - Constant Arrival Rate
         run: |
-          k6-html-reporter --name report_constant_arrival_rate.html \
+          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html \
             --json-file ${{ github.workspace }}/load-tests/results_constant_arrival_rate.json
 
       - name: Upload Test Reports
@@ -93,9 +93,9 @@ jobs:
         with:
           name: k6-test-reports
           path: |
-            ${{ github.workspace }}/report_constant_vus.html
-            ${{ github.workspace }}/report_ramping_vus.html
-            ${{ github.workspace }}/report_constant_arrival_rate.html
+            ${{ github.workspace }}/load-tests/report_constant_vus.html
+            ${{ github.workspace }}/load-tests/report_ramping_vus.html
+            ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html
 
       - name: Tear down Docker Compose
         if: always()
