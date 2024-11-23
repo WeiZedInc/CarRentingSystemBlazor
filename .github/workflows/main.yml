@@ -42,19 +42,24 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '18'
 
-      - name: Install k6-html-reporter
+      - name: Install k6-reporter
         run: |
-          npm install -g k6-html-reporter
+          npm install -g k6-reporter
           echo "Adding global npm bin directory to PATH"
-          echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
+          npm_bin_global=$(npm bin -g)
+          echo "Global npm bin directory: $npm_bin_global"
+          echo "$npm_bin_global" >> $GITHUB_PATH
+
 
       - name: Set up Docker Compose
         working-directory: ${{ github.workspace }}
         run: |
           docker-compose down || true
           docker-compose up -d
+          # Wait for the app to be ready
+          sleep 15
 
       - name: Run K6 Test - Constant VUs
         working-directory: ${{ github.workspace }}
@@ -62,12 +67,12 @@ jobs:
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/constant_vus_test.js \
-            --out json=/dev/stdout > ${{ github.workspace }}/load-tests/results_constant_vus.json
+            --summary-export=/scripts/results_constant_vus.json
 
       - name: Generate K6 HTML Report - Constant VUs
         run: |
-          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_vus.html \
-            --json-file ${{ github.workspace }}/load-tests/results_constant_vus.json
+          k6-reporter ${{ github.workspace }}/load-tests/results_constant_vus.json \
+            -o ${{ github.workspace }}/load-tests/report_constant_vus.html
 
       - name: Run K6 Test - Ramping VUs
         working-directory: ${{ github.workspace }}
@@ -75,12 +80,12 @@ jobs:
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/ramping_vus_test.js \
-            --out json=/dev/stdout > ${{ github.workspace }}/load-tests/results_ramping_vus.json
+            --summary-export=/scripts/results_ramping_vus.json
 
       - name: Generate K6 HTML Report - Ramping VUs
         run: |
-          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_ramping_vus.html \
-            --json-file ${{ github.workspace }}/load-tests/results_ramping_vus.json
+          k6-reporter ${{ github.workspace }}/load-tests/results_ramping_vus.json \
+            -o ${{ github.workspace }}/load-tests/report_ramping_vus.html
 
       - name: Run K6 Test - Constant Arrival Rate
         working-directory: ${{ github.workspace }}
@@ -88,12 +93,12 @@ jobs:
           docker run --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/constant_arrival_rate_test.js \
-            --out json=/dev/stdout > ${{ github.workspace }}/load-tests/results_constant_arrival_rate.json
+            --summary-export=/scripts/results_constant_arrival_rate.json
 
       - name: Generate K6 HTML Report - Constant Arrival Rate
         run: |
-          k6-html-reporter --name ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html \
-            --json-file ${{ github.workspace }}/load-tests/results_constant_arrival_rate.json
+          k6-reporter ${{ github.workspace }}/load-tests/results_constant_arrival_rate.json \
+            -o ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html
 
       - name: Upload Test Reports
         uses: actions/upload-artifact@v3
