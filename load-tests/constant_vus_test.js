@@ -1,21 +1,25 @@
 import http from 'k6/http';
-import { check } from 'k6';
-import { sleep } from 'k6';
+import { check, sleep } from 'k6';
+import { randomIntBetween } from 'k6';
 
-// Test configuration
 export const options = {
-    vus: 10, // Number of virtual users
-    duration: '30s', // Test duration
+  scenarios: {
+    constant_load: {
+      executor: 'constant-vus',
+      vus: 10,         // Number of virtual users
+      duration: '1m', 
+    },
+  },
 };
 
 export default function () {
-    const url = 'http://app:80/api/users'; // Use Docker service name and container port
-    const response = http.get(url);
+  const url = 'http://app:80/api/users';
+  const response = http.get(url);
 
-    // Validate response
-    check(response, {
-        'is status 200': (r) => r.status === 200,
-    });
+  check(response, {
+    'status is 200': (r) => r.status === 200,
+  });
 
-    sleep(1); // Simulate user wait time between requests
+  sleep(1);
+  //sleep(randomIntBetween(1, 5));
 }

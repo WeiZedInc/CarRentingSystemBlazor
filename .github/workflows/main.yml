@@ -28,7 +28,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: build
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -43,11 +43,59 @@ jobs:
         run: |
           docker-compose -f docker-compose.yml down || true
           docker-compose -f docker-compose.yml up -d
-      
-      - name: Run K6 performance tests
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - name: Install k6-html-reporter
+        run: npm install -g k6-html-reporter
+
+      - name: Run K6 Test - Constant VUs
         run: |
-          docker-compose up -d # Ensure all services are running
-          docker run --network="carrentingsystemblazor_default" -v ${{ github.workspace }}/load-tests:/scripts grafana/k6 run /scripts/constant_vus_test.js
+          docker run --network="carrentingsystemblazor_default" \
+            -v ${{ github.workspace }}/load-tests:/scripts \
+            grafana/k6 run /scripts/constant_vus_test.js \
+            --out json=/scripts/results_constant_vus.json
+
+      - name: Generate K6 HTML Report - Constant VUs
+        run: |
+          k6-html-reporter --name report_constant_vus.html \
+            --json-file ${{ github.workspace }}/load-tests/results_constant_vus.json
+
+      - name: Run K6 Test - Ramping VUs
+        run: |
+          docker run --network="carrentingsystemblazor_default" \
+            -v ${{ github.workspace }}/load-tests:/scripts \
+            grafana/k6 run /scripts/ramping_vus_test.js \
+            --out json=/scripts/results_ramping_vus.json
+
+      - name: Generate K6 HTML Report - Ramping VUs
+        run: |
+          k6-html-reporter --name report_ramping_vus.html \
+            --json-file ${{ github.workspace }}/load-tests/results_ramping_vus.json
+
+      - name: Run K6 Test - Constant Arrival Rate
+        run: |
+          docker run --network="carrentingsystemblazor_default" \
+            -v ${{ github.workspace }}/load-tests:/scripts \
+            grafana/k6 run /scripts/constant_arrival_rate_test.js \
+            --out json=/scripts/results_constant_arrival_rate.json
+
+      - name: Generate K6 HTML Report - Constant Arrival Rate
+        run: |
+          k6-html-reporter --name report_constant_arrival_rate.html \
+            --json-file ${{ github.workspace }}/load-tests/results_constant_arrival_rate.json
+
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: k6-test-reports
+          path: |
+            ${{ github.workspace }}/report_constant_vus.html
+            ${{ github.workspace }}/report_ramping_vus.html
+            ${{ github.workspace }}/report_constant_arrival_rate.html
 
       - name: Tear down Docker Compose
         if: always()
