@@ -50,21 +50,21 @@ jobs:
       - name: Run K6 Test - Constant VUs
         working-directory: ${{ github.workspace }}
         run: |
-          docker run --network="carrentingsystemblazor_default" \
+          docker run --user 0 --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/constant_vus_test.js
 
       - name: Run K6 Test - Ramping VUs
         working-directory: ${{ github.workspace }}
         run: |
-          docker run --network="carrentingsystemblazor_default" \
+          docker run --user 0 --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/ramping_vus_test.js
 
       - name: Run K6 Test - Constant Arrival Rate
         working-directory: ${{ github.workspace }}
         run: |
-          docker run --network="carrentingsystemblazor_default" \
+          docker run --user 0 --network="carrentingsystemblazor_default" \
             -v ${{ github.workspace }}/load-tests:/scripts \
             grafana/k6 run /scripts/constant_arrival_rate_test.js
 
@@ -75,7 +75,7 @@ jobs:
           path: |
             ${{ github.workspace }}/load-tests/report_constant_vus.html
             ${{ github.workspace }}/load-tests/report_ramping_vus.html
-            ${{ github.workspace }}/load-tests/report_arrival_vus.html
+            ${{ github.workspace }}/load-tests/report_constant_arrival_rate.html
 
       - name: Output Application Logs
         if: failure()

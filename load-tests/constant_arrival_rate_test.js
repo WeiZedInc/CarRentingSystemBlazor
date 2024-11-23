@@ -27,6 +27,6 @@ export default function () {
 import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
 export function handleSummary(data) {
     return {
-      '/scripts/report_arrival_vus.html': textSummary(data, { format: 'html' }),
+      '/scripts/report_constant_arrival_rate.html': textSummary(data, { format: 'html' }),
     };
   }
